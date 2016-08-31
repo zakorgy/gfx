@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["DEFAULT_CONFIG",""]],"enum":[["Backend",""]],"mod":[["shade",""]],"struct":[["Config",""],["Init",""],["Wrap",""]],"trait":[["Application",""],["ApplicationBase",""],["ApplicationGL",""],["Factory",""]],"type":[["ColorFormat",""],["DepthFormat",""],["WrapGL2",""]]});
