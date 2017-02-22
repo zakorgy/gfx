@@ -87,6 +87,16 @@ impl Factory {
                     -> Result<native::TextureView, f::ResourceViewError> {
         let raw_tex = self.frame_handles.ref_texture(htex);
         let td = htex.get_info();
+        let sub_range = native::SubresourceRange {
+            aspectMask: data::map_image_aspect(td.format, desc.channel, is_target),
+            baseMipLevel: desc.min as u32,
+            levelCount: (desc.max + 1 - desc.min) as u32,
+            baseArrayLayer: desc.layer.unwrap_or(0) as u32,
+            layerCount: match desc.layer {
+                Some(_) => 1,
+                None => td.kind.get_num_slices().unwrap_or(1) as u32,
+            }
+        };
         let info = vk::ImageViewCreateInfo {
             sType: vk::STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             pNext: ptr::null(),
@@ -101,16 +111,7 @@ impl Factory {
                 None => return Err(f::ResourceViewError::Channel(desc.channel)),
             },
             components: data::map_swizzle(desc.swizzle),
-            subresourceRange: vk::ImageSubresourceRange {
-                aspectMask: data::map_image_aspect(td.format, desc.channel, is_target),
-                baseMipLevel: desc.min as u32,
-                levelCount: (desc.max + 1 - desc.min) as u32,
-                baseArrayLayer: desc.layer.unwrap_or(0) as u32,
-                layerCount: match desc.layer {
-                    Some(_) => 1,
-                    None => td.kind.get_num_slices().unwrap_or(1) as u32,
-                },
-            },
+            subresourceRange: sub_range.into(),
         };
 
         let (dev, vk) = self.share.get_device();
@@ -122,7 +123,7 @@ impl Factory {
             image: raw_tex.image,
             view: view,
             layout: raw_tex.layout.get(), //care!
-            sub_range: info.subresourceRange,
+            sub_range: sub_range,
         })
     }
 

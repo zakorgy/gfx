@@ -62,11 +62,33 @@ unsafe impl Send for Texture {}
 unsafe impl Sync for Texture {}
 
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
+pub struct SubresourceRange {
+    pub aspectMask: vk::ImageAspectFlags,
+    pub baseMipLevel: u32,
+    pub levelCount: u32,
+    pub baseArrayLayer: u32,
+    pub layerCount: u32,
+}
+
+impl Into<vk::ImageSubresourceRange> for SubresourceRange {
+    fn into(self) -> vk::ImageSubresourceRange {
+        vk::ImageSubresourceRange {
+            aspectMask: self.aspectMask,
+            baseMipLevel: self.baseMipLevel,
+            levelCount: self.levelCount,
+            baseArrayLayer: self.baseArrayLayer,
+            layerCount: self.layerCount,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub struct TextureView {
     pub image: vk::Image,
     pub view: vk::ImageView,
     pub layout: vk::ImageLayout,
-    pub sub_range: vk::ImageSubresourceRange,
+    //pub sub_range: vk::ImageSubresourceRange,
+    pub sub_range: SubresourceRange,
 }
 unsafe impl Send for TextureView {}
 unsafe impl Sync for TextureView {}

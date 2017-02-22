@@ -3,13 +3,17 @@ use spirv_utils::{self, desc, instruction};
 use core;
 use core::shade::{self, BaseType, ContainerType, TextureType};
 
+#[derive(Clone, Debug, Hash, PartialEq)]
+struct StorageClass(desc::StorageClass);
+impl Eq for StorageClass {}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Variable {
     id: desc::Id,
     name: String,
     ty: desc::Id,
-    storage_class: desc::StorageClass,
-    decoration: Vec<instruction::Decoration>,
+    storage_class: StorageClass,
+    //decoration: Vec<instruction::Decoration>, //TEMP
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -31,7 +35,7 @@ pub enum Ty {
 pub struct Type {
     id: desc::Id,
     ty: Ty,
-    decoration: Vec<instruction::Decoration>,
+    //decoration: Vec<instruction::Decoration>, //TEMP
 }
 
 fn map_execution_model_to_stage(model: desc::ExecutionModel) -> Option<shade::Stage> {
@@ -153,11 +157,7 @@ fn map_instruction_to_type(module: &spirv_utils::RawModule, instr: &instruction:
             let decoration = map_decorations_by_id(&module, result_type.into());
 
             // NOTE: temporary value, changes might be needed later depending on the decorations of the variable
-            let matrix_format = if decoration.iter().find(|deco| **deco == Decoration::RowMajor).is_some() {
-                shade::MatrixFormat::RowMajor
-            } else {
-                shade::MatrixFormat::ColumnMajor
-            };
+            let matrix_format = shade::MatrixFormat::RowMajor; //TEMP
 
             Some((result_type, Ty::Basic(base, ContainerType::Matrix(matrix_format, rows as u8, cols as u8))))
         },
@@ -184,7 +184,7 @@ fn map_instruction_to_type(module: &spirv_utils::RawModule, instr: &instruction:
     id_ty.map(|(id, ty)| Type {
             id: id.into(),
             ty: ty,
-            decoration: map_decorations_by_id(&module, id.into()),
+            //decoration: map_decorations_by_id(&module, id.into()), //TEMP
         })
 }
 
@@ -243,8 +243,8 @@ pub fn reflect_spirv_module(code: &[u8]) -> SpirvReflection {
                     id: result_id.into(),
                     name: name.into(),
                     ty: ty.into(),
-                    storage_class: storage_class,
-                    decoration: decoration,
+                    storage_class: StorageClass(storage_class),
+                    //decoration: decoration,
                 });
             },
 
@@ -270,12 +270,9 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
         let entry_point = reflection.entry_points.iter().find(|ep| ep.name == "main" && ep.stage == stage).expect("Couln't find entry point!");
         for attrib in entry_point.interface.iter() {
             if let Some(var) = reflection.variables.iter().find(|var| var.id == *attrib) {
-                if var.storage_class == desc::StorageClass::Input {
+                if var.storage_class.0 == desc::StorageClass::Input {
                     let attrib_name = var.name.clone();
-                    let slot = var.decoration.iter()
-                                     .find(|dec| if let &instruction::Decoration::Location(..) = *dec { true } else { false })
-                                     .map(|dec| if let instruction::Decoration::Location(slot) = *dec { Some(slot) } else { None })
-                                     .expect("Missing location decoration").unwrap();
+                    let slot = 0; //TEMP
                     let ty = reflection.types.iter().find(|ty| ty.id == var.ty).unwrap();
                     if let Ty::Basic(base, container) = ty.ty {
                         info.vertex_attributes.push(shade::AttributeVar {
@@ -297,12 +294,9 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
         if let Some(entry_point) = reflection.entry_points.iter().find(|ep| ep.name == "main" && ep.stage == stage) {
             for out in entry_point.interface.iter() {
                 if let Some(var) = reflection.variables.iter().find(|var| var.id == *out) {
-                    if var.storage_class == desc::StorageClass::Output {
+                    if var.storage_class.0 == desc::StorageClass::Output {
                         let target_name = var.name.clone();
-                        let slot = var.decoration.iter()
-                                         .find(|dec| if let &instruction::Decoration::Location(..) = *dec { true } else { false })
-                                         .map(|dec| if let instruction::Decoration::Location(slot) = *dec { Some(slot) } else { None })
-                                         .expect("Missing location decoration").unwrap();
+                        let slot = 0; //TEMP
                         let ty = reflection.types.iter().find(|ty| ty.id == var.ty).unwrap();
                         if let Ty::Basic(base, container) = ty.ty {
                             info.outputs.push(shade::OutputVar {
@@ -326,7 +320,7 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
     // We use only one descriptor set currently
     for var in reflection.variables.iter() {
         use spirv_utils::desc::StorageClass::*;
-        match var.storage_class {
+        match var.storage_class.0 {
             Uniform | UniformConstant => {
                 if let Some(ty) = reflection.types.iter().find(|ty| ty.id == var.ty) {
                     // constant buffers
@@ -338,10 +332,7 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
                             }
 
                             let buffer_name = var.name.clone();
-                            let slot = var.decoration.iter()
-                                             .find(|dec| if let &instruction::Decoration::Binding(..) = *dec { true } else { false })
-                                             .map(|dec| if let instruction::Decoration::Binding(slot) = *dec { Some(slot) } else { None })
-                                             .expect("Missing binding decoration").unwrap();
+                            let slot = 0; //TEMP
                             info.constant_buffers.push(shade::ConstantBufferVar {
                                 name: buffer_name,
                                 slot: slot as core::ConstantBufferSlot,
@@ -353,10 +344,7 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
 
                         Ty::Sampler => {
                             let sampler_name = var.name.trim_right_matches('_');
-                            let slot = var.decoration.iter()
-                                             .find(|dec| if let &instruction::Decoration::Binding(..) = *dec { true } else { false })
-                                             .map(|dec| if let instruction::Decoration::Binding(slot) = *dec { Some(slot) } else { None })
-                                             .expect("Missing binding decoration").unwrap();
+                            let slot = 0; //TEMP
                             info.samplers.push(shade::SamplerVar {
                                 name: sampler_name.to_owned(),
                                 slot: slot as core::SamplerSlot,
@@ -367,10 +355,7 @@ pub fn populate_info(info: &mut shade::ProgramInfo, stage: shade::Stage, reflect
 
                         Ty::Image(base_type, texture_type) => {
                             let texture_name = var.name.clone();
-                            let slot = var.decoration.iter()
-                                             .find(|dec| if let &instruction::Decoration::Binding(..) = *dec { true } else { false })
-                                             .map(|dec| if let instruction::Decoration::Binding(slot) = *dec { Some(slot) } else { None })
-                                             .expect("Missing binding decoration").unwrap();
+                            let slot = 0; //TEMP
                             info.textures.push(shade::TextureVar {
                                 name: texture_name,
                                 slot: slot as core::ResourceViewSlot,

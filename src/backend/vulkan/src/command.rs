@@ -253,8 +253,9 @@ impl command::Buffer<Resources> for Buffer {
             command::ClearColor::Int(v)   => vk::ClearColorValue::int32(v),
             command::ClearColor::Uint(v)  => vk::ClearColorValue::uint32(v),
         };
+        let sub = tv.sub_range.into();
         unsafe {
-            vk.CmdClearColorImage(self.inner, tv.image, tv.layout, &value, 1, &tv.sub_range);
+            vk.CmdClearColorImage(self.inner, tv.image, tv.layout, &value, 1, &sub);
         }
     }
 
@@ -265,8 +266,9 @@ impl command::Buffer<Resources> for Buffer {
             depth: depth.unwrap_or(1.0), //TODO
             stencil: stencil.unwrap_or(0) as u32, //TODO
         };
+        let sub = tv.sub_range.into();
         unsafe {
-            vk.CmdClearDepthStencilImage(self.inner, tv.image, tv.layout, &value, 1, &tv.sub_range);
+            vk.CmdClearDepthStencilImage(self.inner, tv.image, tv.layout, &value, 1, &sub);
         }
     }
 
