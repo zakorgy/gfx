@@ -311,7 +311,8 @@ fn create_surface(backend: device_vulkan::SharePointer, window: &winit::Window) 
         pNext: ptr::null(),
         flags: 0,
         connection: window.get_xcb_connection().unwrap() as *const _,
-        window: window.get_xlib_window().unwrap() as *const _,
+        //window: window.get_xcb_window().unwrap(),
+        window: 0, //TEMP
     };
     let mut out = 0;
     assert_eq!(vk::SUCCESS, unsafe {

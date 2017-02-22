@@ -13,7 +13,7 @@ name = "gfx_window_vulkan"
 
 [dependencies]
 winit = "0.5"
-vk-sys = { git = "https://github.com/sectopod/vulkano", branch = "bind" }
+vk-sys = "0.2"
 gfx_core = { path = "../../core", version = "0.6" }
 gfx_device_vulkan = { path = "../../backend/vulkan", version = "0.1" }
 
