@@ -464,17 +464,6 @@ impl Device {
         let ArraySize = (range.layers.end - range.layers.start) as _;
 
         match kind {
-            image::Kind::D2(..) => {
-                assert_eq!(range.levels.start + 1, range.levels.end);
-                desc.ViewDimension = d3d12::D3D12_RTV_DIMENSION_TEXTURE2D;
-                *unsafe { desc.u.Texture2D_mut() } = d3d12::D3D12_TEX2D_RTV {
-                    MipSlice: range.levels.start as _,
-                    PlaneSlice: 0, //TODO
-                };
-            },
-            _ => unimplemented!()
-        };
-        match kind {
             image::Kind::D1(_) => {
                 desc.ViewDimension = d3d12::D3D12_RTV_DIMENSION_TEXTURE1D;
                 *unsafe{ desc.u.Texture1D_mut() } = d3d12::D3D12_TEX1D_RTV {
