@@ -1301,7 +1301,6 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
                     region.buffer_height
                 };
 
-                assert!(buffer_width >= width as u32);
                 assert_eq!(region.buffer_offset % d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT as u64, 0);
 
                 let row_pitch = div(buffer_width, image.block_dim.0 as _) * image.bytes_per_block as u32;
