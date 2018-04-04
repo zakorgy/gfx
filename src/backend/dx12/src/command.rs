@@ -735,13 +735,15 @@ impl CommandBuffer {
                         let gap = (row_offset - aligned_offset) as u32;
 
                         copies.push(Copy {
-                            footprint_offset: aligned_offset,
+                            // This value seems like not in bytes.
+                            footprint_offset: aligned_offset * image.bytes_per_block as u64,
                             footprint: image::Extent {
                                 width: cut_width + gap,
                                 height: 1,
                                 depth: 1,
                             },
-                            row_pitch: d3d12::D3D12_TEXTURE_DATA_PITCH_ALIGNMENT,
+                            // Using d3d12::D3D12_TEXTURE_DATA_PITCH_ALIGNMENT causes an error, because row pitch is less than equal than width.
+                            row_pitch: ((cut_width * image.bytes_per_block as u32) | (d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT - 1)) + 1,
                             img_subresource,
                             img_offset: image::Offset {
                                 x: r.image_offset.x,
@@ -767,13 +769,15 @@ impl CommandBuffer {
                         let leftover = r.image_extent.width - cut_width;
 
                         copies.push(Copy {
-                            footprint_offset: next_aligned_offset,
+                            // This value seems like not in bytes.
+                            footprint_offset: next_aligned_offset * image.bytes_per_block as u64,
                             footprint: image::Extent {
                                 width: leftover,
                                 height: 1,
                                 depth: 1,
                             },
-                            row_pitch: (leftover | (d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT - 1)) + 1,
+                            // This value seems like not in bytes.
+                            row_pitch: ((leftover * image.bytes_per_block as u32) | (d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT - 1)) + 1,
                             img_subresource,
                             img_offset: image::Offset {
                                 x: r.image_offset.x + cut_width as i32,
