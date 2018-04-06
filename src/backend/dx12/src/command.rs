@@ -640,7 +640,10 @@ impl CommandBuffer {
             let layer_offset = r.buffer_offset as u64 + (layer as u32 * slice_pitch * r.image_extent.depth) as u64;
             let aligned_offset = layer_offset & !(d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT as u64 - 1);
             if layer_offset == aligned_offset && is_pitch_aligned {
+                println!("## trivial case: everything is aligned, ready for copying");
                 // trivial case: everything is aligned, ready for copying
+                println!("## row_pitch = {}", row_pitch);
+                println!("## aligned offset = {}", aligned_offset);
                 copies.push(Copy {
                     footprint_offset: aligned_offset,
                     footprint: r.image_extent,
@@ -651,6 +654,7 @@ impl CommandBuffer {
                     copy_extent: r.image_extent,
                 });
             } else if is_pitch_aligned {
+                println!("buffer offset is not aligned");
                 // buffer offset is not aligned
                 assert_eq!(image.block_dim, (1, 1)); // TODO
                 let row_pitch_texels = row_pitch / image.bytes_per_block as u32;
@@ -721,6 +725,7 @@ impl CommandBuffer {
                     });
                 }
             } else {
+                println!("worst case: row by row copy");
                 // worst case: row by row copy
                 assert_eq!(image.block_dim, (1, 1)); // TODO
                 for z in 0 .. r.image_extent.depth {
@@ -734,6 +739,7 @@ impl CommandBuffer {
                         let cut_width = cmp::min(r.image_extent.width, (next_aligned_offset - row_offset) as _);
                         let gap = (row_offset - aligned_offset) as u32;
 
+                        println!("## row_pitch 1 = {}", ((cut_width * image.bytes_per_block as u32) | (d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT - 1)) + 1);
                         copies.push(Copy {
                             // This value seems like not in bytes.
                             footprint_offset: aligned_offset * image.bytes_per_block as u64,
@@ -768,6 +774,7 @@ impl CommandBuffer {
                         }
                         let leftover = r.image_extent.width - cut_width;
 
+                        println!("## row_pitch 2 = {}", ((leftover * image.bytes_per_block as u32) | (d3d12::D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT - 1)) + 1);
                         copies.push(Copy {
                             // This value seems like not in bytes.
                             footprint_offset: next_aligned_offset * image.bytes_per_block as u64,
@@ -1512,6 +1519,7 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
                 front: c.buf_offset.z as u32,
                 back: c.buf_offset.z as u32 + c.copy_extent.depth,
             };
+            //println!("c.footprint_offset = {}", c.footprint_offset);
             let footprint = d3d12::D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
                 Offset: c.footprint_offset,
                 Footprint: d3d12::D3D12_SUBRESOURCE_FOOTPRINT {
