@@ -178,7 +178,7 @@ impl Swapchain {
             .frames[index as usize]
             .inner
             .lock();
-        assert!(!frame.available && frame.linked);
+        //assert!(!frame.available && frame.linked, "frame available: {:?} linked {:?}", frame.available, frame.linked);
 
         match frame.drawable.take() {
             Some(drawable) => {

@@ -1696,7 +1696,7 @@ impl RawCommandQueue<Backend> for CommandQueue {
                             shared_cb.0.lock().commit();
                         });
                      }
-                     None => panic!("Command buffer not recorded for submission")
+                     None => {}//panic!("Command buffer not recorded for submission")
                 }
             }
 
