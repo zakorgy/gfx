@@ -176,9 +176,15 @@ impl Instance {
             .enumerate_instance_extension_properties()
             .expect("Unable to enumerate instance extensions");
 
+        println!("#################################");
+        println!("instance_extensions: {:#?}", instance_extensions);
+
         let instance_layers = entry
             .enumerate_instance_layer_properties()
             .expect("Unable to enumerate instance layers");
+
+        println!("#################################");
+        println!("instance_layers: {:#?}", instance_layers);
 
         // Check our xtensions against the available extensions
         let extensions = SURFACE_EXTENSIONS
@@ -277,6 +283,8 @@ impl hal::Instance for Instance {
             .into_iter()
             .map(|device| {
                 let properties = self.raw.0.get_physical_device_properties(device);
+                println!("#################################");
+                println!("get_physical_device_properties: {:#?}", properties);
                 let info = hal::AdapterInfo {
                     name: unsafe {
                         CStr::from_ptr(properties.device_name.as_ptr())
@@ -390,6 +398,11 @@ impl hal::PhysicalDevice<Backend> for PhysicalDevice {
                 p_enabled_features: &enabled_features,
             };
 
+            println!("#################################");
+            println!("Info: {:#?}", info);
+            println!("#################################");
+            println!("Properties: {:#?}", self.properties);
+
             unsafe {
                 self.instance
                     .0
@@ -496,6 +509,8 @@ impl hal::PhysicalDevice<Backend> for PhysicalDevice {
             .instance
             .0
             .get_physical_device_memory_properties(self.handle);
+            println!("#################################");
+            println!("get_physical_device_memory_properties: {:#?}", mem_properties);
         let memory_heaps = mem_properties.memory_heaps[..mem_properties.memory_heap_count as usize]
             .iter()
             .map(|mem| mem.size)
@@ -558,6 +573,8 @@ impl hal::PhysicalDevice<Backend> for PhysicalDevice {
                 == info::intel::DEVICE_KABY_LAKE_MASK;
 
         let features = self.instance.0.get_physical_device_features(self.handle);
+        println!("#################################");
+        println!("get_physical_device_features: {:#?}", features);
         let mut bits = Features::empty();
 
         if features.robust_buffer_access != 0 {

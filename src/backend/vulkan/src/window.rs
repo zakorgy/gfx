@@ -305,6 +305,8 @@ impl hal::Surface<Backend> for Surface {
                 self.raw.handle,
             )
             .expect("Unable to query surface capabilities");
+        println!("#################################");
+        println!("surface capabilities: {:?}", caps);
 
         // If image count is 0, the support number of images is unlimited.
         let max_images = if caps.max_image_count == 0 { !0 } else { caps.max_image_count };

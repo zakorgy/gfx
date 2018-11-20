@@ -104,6 +104,7 @@ fn main() {
 
     let mut adapter = adapters.remove(0);
     let memory_types = adapter.physical_device.memory_properties().memory_types;
+    let _features = adapter.physical_device.features();
     let limits = adapter.physical_device.limits();
 
     // Build a new device and associated command queues
