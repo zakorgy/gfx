@@ -805,6 +805,50 @@ pub enum DescriptorSet {
 unsafe impl Send for DescriptorSet {}
 unsafe impl Sync for DescriptorSet {}
 
+impl DescriptorSet {
+    pub fn bind_sampler(&self, binding: u32, sampler: &Sampler) {
+        match self {
+            DescriptorSet::Emulated {
+                ref pool,
+                ref layouts,
+                ref resources,
+            } => {
+                let mut counters = resources.map(|r| r.start);
+                let mut start = None; //TODO: can pre-compute this
+                for (i, layout) in layouts.iter().enumerate() {
+                    if layout.binding == binding
+                        && layout.array_index == 0
+                    {
+                        start = Some(i);
+                        break;
+                    }
+                    counters.add(layout.content);
+                }
+                let mut data = pool.write();
+
+                for layout in layouts[start.unwrap()..].iter()
+                {
+                    debug_assert!(!layout
+                        .content
+                        .contains(DescriptorContent::IMMUTABLE_SAMPLER));
+                    data.samplers[counters.samplers as usize] =
+                        Some(AsNative::from(sampler.0.as_ref()));
+                    counters.add(layout.content);
+                }
+            }
+            DescriptorSet::ArgumentBuffer {
+                ref raw,
+                offset,
+                ref encoder,
+                ..
+            } => {
+                encoder.set_argument_buffer(raw, *offset);
+                encoder.set_sampler_states(&[&sampler.0], binding as _);
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Memory {
     pub(crate) heap: MemoryHeap,
