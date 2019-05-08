@@ -1554,7 +1554,8 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
             data: internal::BlitData,
         };
         let mut instances = FastHashMap::<internal::BlitKey, Vec<Instance>>::default();
-        let mut barriers = Vec::new();
+        let mut pre_barriers = Vec::new();
+        let mut post_barriers = Vec::new();
 
         for region in regions {
             let r = region.borrow();
@@ -1654,7 +1655,7 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
                     data,
                 });
 
-                barriers.push(Self::transition_barrier(
+                pre_barriers.push(Self::transition_barrier(
                     d3d12::D3D12_RESOURCE_TRANSITION_BARRIER {
                         pResource: dst.resource.as_mut_ptr(),
                         Subresource: dst.calc_subresource(
@@ -1666,12 +1667,25 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
                         StateAfter: d3d12::D3D12_RESOURCE_STATE_RENDER_TARGET,
                     },
                 ));
+
+                post_barriers.push(Self::transition_barrier(
+                    d3d12::D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: dst.resource.as_mut_ptr(),
+                        Subresource: dst.calc_subresource(
+                            r.dst_subresource.level as _,
+                            (first_layer + i) as _,
+                            0,
+                        ),
+                        StateBefore: d3d12::D3D12_RESOURCE_STATE_RENDER_TARGET,
+                        StateAfter: d3d12::D3D12_RESOURCE_STATE_COPY_DEST,
+                    },
+                ));
             }
         }
 
         // pre barriers
         self.raw
-            .ResourceBarrier(barriers.len() as _, barriers.as_ptr());
+            .ResourceBarrier(pre_barriers.len() as _, pre_barriers.as_ptr());
         // execute blits
         self.set_internal_graphics_pipeline();
         for (key, list) in instances {
@@ -1702,12 +1716,8 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
             }
         }
         // post barriers
-        for bar in &mut barriers {
-            let mut transition = *bar.u.Transition_mut();
-            mem::swap(&mut transition.StateBefore, &mut transition.StateAfter);
-        }
         self.raw
-            .ResourceBarrier(barriers.len() as _, barriers.as_ptr());
+            .ResourceBarrier(post_barriers.len() as _, post_barriers.as_ptr());
 
         // Reset states
         self.raw
