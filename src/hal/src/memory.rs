@@ -77,7 +77,9 @@ bitflags!(
 /// A [memory barrier](https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronization-memory-barriers)
 /// type for either buffers or images.
 #[allow(missing_docs)]
-#[derive(Clone, Debug)]
+#[derive(Clone)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub enum Barrier<'a, B: Backend> {
     /// Applies the given access flags to all buffers in the range.
     AllBuffers(Range<buffer::Access>),
@@ -85,10 +87,10 @@ pub enum Barrier<'a, B: Backend> {
     AllImages(Range<image::Access>),
     /// A memory barrier that defines access to a buffer.
     Buffer {
-        /// The access flags controlling the buffer.
-        states: Range<buffer::State>,
         /// The buffer the barrier controls.
         target: &'a B::Buffer,
+        /// The access flags controlling the buffer.
+        states: Range<buffer::State>,
         /// The source and destination Queue family IDs, for a [queue family ownership transfer](https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronization-queue-transfers)
         /// Can be `None` to indicate no ownership transfer.
         families: Option<Range<queue::QueueFamilyId>>,
@@ -97,14 +99,16 @@ pub enum Barrier<'a, B: Backend> {
     },
     /// A memory barrier that defines access to (a subset of) an image.
     Image {
-        /// The access flags controlling the image.
-        states: Range<image::State>,
         /// The image the barrier controls.
         target: &'a B::Image,
+        /// The access flags controlling the image.
+        states: Range<image::State>,
         /// The source and destination Queue family IDs, for a [queue family ownership transfer](https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronization-queue-transfers)
         /// Can be `None` to indicate no ownership transfer.
+        #[derivative(Debug = "ignore")]
         families: Option<Range<queue::QueueFamilyId>>,
         /// A `SubresourceRange` that defines which section of an image the barrier applies to.
+        #[derivative(Debug = "ignore")]
         range: image::SubresourceRange,
     },
 }

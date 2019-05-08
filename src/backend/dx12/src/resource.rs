@@ -217,15 +217,22 @@ pub struct ImageBound {
     pub(crate) resource: native::Resource,
     #[derivative(Debug = "ignore")]
     pub(crate) place: Place,
+    #[derivative(Debug = "ignore")]
     pub(crate) surface_type: format::SurfaceType,
+    #[derivative(Debug = "ignore")]
     pub(crate) kind: image::Kind,
+    #[derivative(Debug = "ignore")]
     pub(crate) usage: image::Usage,
+    #[derivative(Debug = "ignore")]
     pub(crate) default_view_format: Option<DXGI_FORMAT>,
+    #[derivative(Debug = "ignore")]
     pub(crate) view_caps: image::ViewCapabilities,
     #[derivative(Debug = "ignore")]
     pub(crate) descriptor: d3d12::D3D12_RESOURCE_DESC,
+    #[derivative(Debug = "ignore")]
     pub(crate) bytes_per_block: u8,
     // Dimension of a texel block (compressed formats).
+    #[derivative(Debug = "ignore")]
     pub(crate) block_dim: (u8, u8),
     #[derivative(Debug = "ignore")]
     pub(crate) clear_cv: Vec<native::CpuDescriptor>,
@@ -233,6 +240,7 @@ pub struct ImageBound {
     pub(crate) clear_dv: Vec<native::CpuDescriptor>,
     #[derivative(Debug = "ignore")]
     pub(crate) clear_sv: Vec<native::CpuDescriptor>,
+    #[derivative(Debug = "ignore")]
     pub(crate) requirements: memory::Requirements,
 }
 

@@ -3,6 +3,7 @@ use crate::queue::QueueType;
 
 /// General capability, supporting graphics, compute and transfer operations.
 pub enum General {}
+#[derive(Debug)]
 /// Graphics capability, supporting graphics and transfer operations.
 pub enum Graphics {}
 /// Compute capability, supporting compute and transfer operations.

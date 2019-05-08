@@ -6,6 +6,8 @@
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
+extern crate derivative;
+#[macro_use]
 extern crate failure;
 
 #[cfg(feature = "mint")]

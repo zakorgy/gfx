@@ -282,26 +282,35 @@ struct Copy {
 #[derivative(Debug)]
 pub struct CommandBuffer {
     raw: native::GraphicsCommandList,
+    #[derivative(Debug = "ignore")]
     allocator: native::CommandAllocator,
+    #[derivative(Debug = "ignore")]
     shared: Arc<Shared>,
 
     // Cache renderpasses for graphics operations
+    #[derivative(Debug = "ignore")]
     pass_cache: Option<RenderPassCache>,
+    #[derivative(Debug = "ignore")]
     cur_subpass: usize,
 
     // Cache current graphics root signature and pipeline to minimize rebinding and support two
     // bindpoints.
+    #[derivative(Debug = "ignore")]
     gr_pipeline: PipelineCache,
     // Primitive topology of the currently bound graphics pipeline.
     // Caching required for internal graphics pipelines.
+    #[derivative(Debug = "ignore")]
     primitive_topology: d3d12::D3D12_PRIMITIVE_TOPOLOGY,
     // Cache current compute root signature and pipeline.
+    #[derivative(Debug = "ignore")]
     comp_pipeline: PipelineCache,
     // D3D12 only has one slot for both bindpoints. Need to rebind everything if we want to switch
     // between different bind points (ie. calling draw or dispatch).
+    #[derivative(Debug = "ignore")]
     active_bindpoint: BindPoint,
     // Current descriptor heaps heaps (CBV/SRV/UAV and Sampler).
     // Required for resetting due to internal descriptor heaps.
+    #[derivative(Debug = "ignore")]
     active_descriptor_heaps: [native::DescriptorHeap; 2],
 
     // Active queries in the command buffer.
@@ -309,18 +318,22 @@ pub struct CommandBuffer {
     // The query pool type on `begin_query` must differ from all currently active queries.
     // Therefore, only one query per query type can be active at the same time. Binary and precise
     // occlusion queries share one queue type in Vulkan.
+    #[derivative(Debug = "ignore")]
     occlusion_query: Option<OcclusionQuery>,
+    #[derivative(Debug = "ignore")]
     pipeline_stats_query: Option<UINT>,
 
     // Cached vertex buffer views to bind.
     // `Stride` values are not known at `bind_vertex_buffers` time because they are only stored
     // inside the pipeline state.
+    #[derivative(Debug = "ignore")]
     vertex_bindings_remap: [Option<r::VertexBinding>; MAX_VERTEX_BUFFERS],
-    
+
     #[derivative(Debug = "ignore")]
     vertex_buffer_views: [d3d12::D3D12_VERTEX_BUFFER_VIEW; MAX_VERTEX_BUFFERS],
 
     // Re-using allocation for the image-buffer copies.
+    #[derivative(Debug = "ignore")]
     copies: Vec<Copy>,
 
     // D3D12 only allows setting all viewports or all scissors at once, not partial updates.
@@ -337,14 +350,18 @@ pub struct CommandBuffer {
     >,
 
     // HACK: renderdoc workaround for temporary RTVs
+    #[derivative(Debug = "ignore")]
     rtv_pools: Vec<native::DescriptorHeap>,
     // Temporary gpu descriptor heaps (internal).
+    #[derivative(Debug = "ignore")]
     temporary_gpu_heaps: Vec<native::DescriptorHeap>,
     // Resources that need to be alive till the end of the GPU execution.
+    #[derivative(Debug = "ignore")]
     retained_resources: Vec<native::Resource>,
     // Parenting command pool create flags.
     //
     // Required for reset behavior.
+    #[derivative(Debug = "ignore")]
     pool_create_flags: pool::CommandPoolCreateFlags,
 }
 
@@ -1143,6 +1160,7 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
         self.insert_subpass_barriers(BarrierPoint::Pre);
         self.pass_cache = None;
     }
+
 
     unsafe fn pipeline_barrier<'a, T>(
         &mut self,
