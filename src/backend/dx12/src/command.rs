@@ -365,6 +365,7 @@ pub struct CommandBuffer {
 unsafe impl Send for CommandBuffer {}
 unsafe impl Sync for CommandBuffer {}
 
+#[derive(Debug)]
 // Insetion point for subpasses.
 enum BarrierPoint {
     // Pre barriers are inserted of the beginning when switching into a new subpass.
@@ -474,6 +475,7 @@ impl CommandBuffer {
             },
             None => &state.render_pass.post_barriers,
         };
+        println!("@GFX inserting {:?} {:?} subpass barriers", proto_barriers.len(), insertion);
 
         let transition_barriers = proto_barriers
             .iter()
@@ -483,6 +485,52 @@ impl CommandBuffer {
                     Flags: barrier.flags,
                     u: unsafe { mem::zeroed() },
                 };
+                println!("@GFX resource transition barrier\
+                    \n\tpResource: {:?}\
+                    \n\tbefore state: ({:#X}: {})\
+                    \n\tafter state: ({:#X}: {})",
+                    state.framebuffer.attachments[barrier.attachment_id],
+                    barrier.states.start,
+                    match barrier.states.start {
+                        d3d12::D3D12_RESOURCE_STATE_COMMON => "D3D12_RESOURCE_STATE_[COMMON|PRESENT]",
+                        d3d12::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER => "D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER",
+                        d3d12::D3D12_RESOURCE_STATE_INDEX_BUFFER => "D3D12_RESOURCE_STATE_INDEX_BUFFER",
+                        d3d12::D3D12_RESOURCE_STATE_RENDER_TARGET => "D3D12_RESOURCE_STATE_RENDER_TARGET",
+                        d3d12::D3D12_RESOURCE_STATE_UNORDERED_ACCESS => "D3D12_RESOURCE_STATE_UNORDERED_ACCESS",
+                        d3d12::D3D12_RESOURCE_STATE_DEPTH_WRITE => "D3D12_RESOURCE_STATE_DEPTH_WRITE",
+                        d3d12::D3D12_RESOURCE_STATE_DEPTH_READ => "D3D12_RESOURCE_STATE_DEPTH_READ",
+                        d3d12::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE => "D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE => "D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_STREAM_OUT => "D3D12_RESOURCE_STATE_STREAM_OUT",
+                        d3d12::D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT => "D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT",
+                        d3d12::D3D12_RESOURCE_STATE_COPY_DEST => "D3D12_RESOURCE_STATE_COPY_DEST",
+                        d3d12::D3D12_RESOURCE_STATE_COPY_SOURCE => "D3D12_RESOURCE_STATE_COPY_SOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_RESOLVE_DEST => "D3D12_RESOURCE_STATE_RESOLVE_DEST",
+                        d3d12::D3D12_RESOURCE_STATE_RESOLVE_SOURCE => "D3D12_RESOURCE_STATE_RESOLVE_SOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_GENERIC_READ => "D3D12_RESOURCE_STATE_GENERIC_READ",
+                        _ => "Missing"
+                    },
+                    barrier.states.end,
+                    match barrier.states.end {
+                        d3d12::D3D12_RESOURCE_STATE_COMMON => "D3D12_RESOURCE_STATE_[COMMON| PRESENT]",
+                        d3d12::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER => "D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER",
+                        d3d12::D3D12_RESOURCE_STATE_INDEX_BUFFER => "D3D12_RESOURCE_STATE_INDEX_BUFFER",
+                        d3d12::D3D12_RESOURCE_STATE_RENDER_TARGET => "D3D12_RESOURCE_STATE_RENDER_TARGET",
+                        d3d12::D3D12_RESOURCE_STATE_UNORDERED_ACCESS => "D3D12_RESOURCE_STATE_UNORDERED_ACCESS",
+                        d3d12::D3D12_RESOURCE_STATE_DEPTH_WRITE => "D3D12_RESOURCE_STATE_DEPTH_WRITE",
+                        d3d12::D3D12_RESOURCE_STATE_DEPTH_READ => "D3D12_RESOURCE_STATE_DEPTH_READ",
+                        d3d12::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE => "D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE => "D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_STREAM_OUT => "D3D12_RESOURCE_STATE_STREAM_OUT",
+                        d3d12::D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT => "D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT",
+                        d3d12::D3D12_RESOURCE_STATE_COPY_DEST => "D3D12_RESOURCE_STATE_COPY_DEST",
+                        d3d12::D3D12_RESOURCE_STATE_COPY_SOURCE => "D3D12_RESOURCE_STATE_COPY_SOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_RESOLVE_DEST => "D3D12_RESOURCE_STATE_RESOLVE_DEST",
+                        d3d12::D3D12_RESOURCE_STATE_RESOLVE_SOURCE => "D3D12_RESOURCE_STATE_RESOLVE_SOURCE",
+                        d3d12::D3D12_RESOURCE_STATE_GENERIC_READ => "D3D12_RESOURCE_STATE_GENERIC_READ",
+                        _ => "Missing"
+                    },
+                );
 
                 *unsafe { resource_barrier.u.Transition_mut() } =
                     d3d12::D3D12_RESOURCE_TRANSITION_BARRIER {
@@ -1145,24 +1193,29 @@ impl com::RawCommandBuffer<Backend> for CommandBuffer {
             attachment_clears,
         });
         self.cur_subpass = 0;
+        println!("@GFX begin_render_pass, insert_subpass_barriers");
         self.insert_subpass_barriers(BarrierPoint::Pre);
         self.bind_targets();
     }
 
     unsafe fn next_subpass(&mut self, _contents: com::SubpassContents) {
+        println!("@GFX next_subpass, insert_subpass_barriers #1");
         self.insert_subpass_barriers(BarrierPoint::Post);
         self.resolve_attachments();
 
         self.cur_subpass += 1;
+        println!("@GFX next_subpass, insert_subpass_barriers #2");
         self.insert_subpass_barriers(BarrierPoint::Pre);
         self.bind_targets();
     }
 
     unsafe fn end_render_pass(&mut self) {
+        println!("@GFX end_render_pass, insert_subpass_barriers #1");
         self.insert_subpass_barriers(BarrierPoint::Post);
         self.resolve_attachments();
 
         self.cur_subpass = !0;
+        println!("@GFX end_render_pass, insert_subpass_barriers #2");
         self.insert_subpass_barriers(BarrierPoint::Pre);
         self.pass_cache = None;
     }

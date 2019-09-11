@@ -1295,6 +1295,7 @@ impl d::Device<B> for Device {
                 None => rp.post_barriers.push(barrier),
             }
         }
+        println!("@GFX create render pass result {:#?}", rp);
 
         Ok(rp)
     }

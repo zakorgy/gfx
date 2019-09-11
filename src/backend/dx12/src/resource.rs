@@ -327,7 +327,7 @@ impl Image {
 #[derive(Copy, Derivative, Clone)]
 #[derivative(Debug)]
 pub struct ImageView {
-    #[derivative(Debug = "ignore")]
+    //#[derivative(Debug = "ignore")]
     pub(crate) resource: native::Resource, // weak-ptr owned by image.
     #[derivative(Debug = "ignore")]
     pub(crate) handle_srv: Option<native::CpuDescriptor>,
