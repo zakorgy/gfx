@@ -1131,10 +1131,15 @@ impl d::Device<B> for Device {
             .map(|attachment| attachment.borrow().clone())
             .collect::<Vec<_>>();
         let subpasses = subpasses.into_iter().collect::<Vec<_>>();
-        let dependencies = dependencies.into_iter().collect::<Vec<_>>();
+        let dependencies = dependencies
+            .into_iter()
+            .map(|dep| dep.borrow().clone())
+            .collect::<Vec<_>>();
         let mut att_infos = attachments
             .iter()
-            .map(|att| AttachmentInfo {
+            .zip(dependencies.iter())
+            .map(|(att, dep)|
+            AttachmentInfo {
                 sub_states: vec![SubState::Undefined; subpasses.len()],
                 target_state: if att.format.map_or(false, |f| f.is_depth()) {
                     d3d12::D3D12_RESOURCE_STATE_DEPTH_WRITE //TODO?
@@ -1142,7 +1147,7 @@ impl d::Device<B> for Device {
                     d3d12::D3D12_RESOURCE_STATE_RENDER_TARGET
                 },
                 last_state: conv::map_image_resource_state(
-                    image::Access::empty(),
+                    dep.accesses.start,
                     att.layouts.start,
                 ),
                 barrier_start_index: 0,
@@ -1275,8 +1280,8 @@ impl d::Device<B> for Device {
         assert!(deps_left.into_iter().all(|count| count == !0));
 
         // take care of the post-pass transitions at the end of the renderpass.
-        for (att_id, (ai, att)) in att_infos.iter().zip(attachments.iter()).enumerate() {
-            let state_dst = conv::map_image_resource_state(image::Access::empty(), att.layouts.end);
+        for (att_id, ((ai, att), dep)) in att_infos.iter().zip(attachments.iter()).zip(dependencies.iter()).enumerate() {
+            let state_dst = conv::map_image_resource_state(dep.accesses.end, att.layouts.end);
             if state_dst == ai.last_state {
                 continue;
             }
