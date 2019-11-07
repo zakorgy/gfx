@@ -270,7 +270,7 @@ pub enum ResizeFill {
 
 impl Default for ResizeFill {
     fn default() -> Self {
-        ResizeFill::Clear([0.0; 4])
+        ResizeFill::Blit
     }
 }
 
