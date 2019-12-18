@@ -854,6 +854,21 @@ where
                 }],
                 command::SubpassContents::Inline,
             );
+            cmd_buffer.clear_attachments(
+                Some(command::AttachmentClear::Color {
+                    index: 0,
+                    value: command::ClearColor { float32: [1.0, 0.0, 0.0, 1.0] },
+                }),
+                Some(pso::ClearRect {
+                    rect: hal::pso::Rect {
+                        x: 100,
+                        y: 100,
+                        w: 100,
+                        h: 100,
+                    },
+                    layers: 0..1,
+                })
+            );
             cmd_buffer.draw(0 .. 6, 0 .. 1);
             cmd_buffer.end_render_pass();
             cmd_buffer.finish();
